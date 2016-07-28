@@ -1,8 +1,10 @@
 // モジュール化
 var tofu = (function() {
+	var miniSide = 7;	//　かけらの一片の長さ
 	var geometry = new THREE.BoxGeometry(12, 12, 12);
-	var miniGeometry = new THREE.BoxGeometry(6, 6, 6);
+	var miniGeometry = new THREE.BoxGeometry(miniSide, miniSide, miniSide);
 	var material = new THREE.MeshPhongMaterial({color: 0xffffff});
+	var miniMaterial = Physijs.createMaterial(new THREE.MeshPhongMaterial({color: 0xffffff}), 1, 1.0);
 	var rotation = {
 		x: 0.0,
 		y: 0.0,
@@ -12,46 +14,30 @@ var tofu = (function() {
 	var cubes = [];
 	var miniCubes = [];
 
+	var minisVector = [
+		[0.2, 0.2, 0.2],
+		[0.2, -0.2, 0.2],
+		[-0.2, 0.2, 0.2],
+		[-0.2, -0.2, 0.2],
+		[0.2, 0.2, -0.2],
+		[0.2, -0.2, -0.2],
+		[-0.2, 0.2, -0.2],
+		[-0.2, -0.2, -0.2]
+	];
+
 	var MiniCube = function(type) {
-		this.cube = new THREE.Mesh(miniGeometry, material);
-		this.vector = [0, 0, 0];
-		this.step = 20;
-		switch (type) {
-			case 0:
-				this.vector = [1, 1, 1];
-				break;
-			case 1:
-				this.vector = [1, -1, 1];
-				break;
-			case 2:
-				this.vector = [-1, 1, 1];
-				break;
-			case 3:
-				this.vector = [-1, -1, 1];
-				break;
-			case 4:
-				this.vector = [1, 1, -1];
-				break;
-			case 5:
-				this.vector = [1, -1, -1];
-				break;
-			case 6:
-				this.vector = [-1, 1, -1];
-				break;
-			case 7:
-				this.vector = [-1, -1, -1];
-				break;
-			default:
-				console.log('Error: Illigal argument.');
-				break;
-		}
+		// this.cube = new THREE.Mesh(miniGeometry, material);
+		this.cube = new Physijs.BoxMesh(miniGeometry, miniMaterial, 1000);
+		this.collisions = 0;
+		// this.cube.addEventListener( 'collision', function( other_object, relative_velocity, relative_rotation, contact_normal ) {
+		//
+		// });
+		this.vector = minisVector[type];
+		this.step = 180;
 	};
 	MiniCube.prototype.move = function () {
-		this.cube.position.x += this.vector[0];
-		this.cube.position.y += this.vector[1];
-		this.cube.position.z += this.vector[2];
-
-		this.step--;
+		// TODO: 外側に大きな箱を作って，外壁に触れたら消えるとかにするといい感じになるのでは
+		// this.step--;
 		if(this.step <= 0){
 			scene.remove(this.cube);
 		}
@@ -84,7 +70,8 @@ var tofu = (function() {
 				var cube = cubes.pop();
 				for (var j = 0; j < 8; j++) {
 					var mc = new MiniCube(j);
-					mc.cube.position.set(cube.position.x + mc.vector[0] * 6, cube.position.y + mc.vector[1] * 6, cube.position.z + mc.vector[2] * 6);
+					mc.cube.position.set(cube.position.x + mc.vector[0] * miniSide, cube.position.y + mc.vector[1] * miniSide, cube.position.z + mc.vector[2] * miniSide);
+					mc.cube.rotation.set(cube.rotation.x, cube.rotation.y, cube.rotation.z);
 					miniCubes.push(mc);
 					scene.add(mc.cube);
 				}
@@ -97,9 +84,11 @@ var tofu = (function() {
 	var animation = function () {
 		rotation.x += 0.01;
 		rotation.y += 0.01;
+		// rotation.z += 0.01;
 		cubes.forEach(elem => {
 			elem.rotation.x = rotation.x;
 			elem.rotation.y = rotation.y;
+			// elem.rotation.z = rotation.z;
 		});
 		miniCubes.forEach(elem => {
 			elem.move();
