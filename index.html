@@ -50,6 +50,7 @@
 
       window.addEventListener( 'resize', onWindowResize, false );
       window.addEventListener( 'keydown', function(e) {
+        // console.log(e.keyCode);
         if (e.keyCode === 8) {
         window.event.returnValue = false;
           tofu.deleteChar();
