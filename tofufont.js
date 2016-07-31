@@ -1,10 +1,10 @@
 // モジュール化
 var tofu = (function() {
 	var miniSide = 7;	//　かけらの一片の長さ
-	var geometry = new THREE.BoxGeometry(12, 12, 12);
+	var cubeGeometry = new THREE.BoxGeometry(12, 12, 12);
 	var miniGeometry = new THREE.BoxGeometry(miniSide, miniSide, miniSide);
-	var material = new THREE.MeshPhongMaterial({color: 0xffffff});
-	var miniMaterial = Physijs.createMaterial(new THREE.MeshPhongMaterial({color: 0xffffff}), 1, 1.0);
+	var material = new THREE.MeshLambertMaterial({color: 0xffffff});
+	var miniMaterial = Physijs.createMaterial(new THREE.MeshLambertMaterial({color: 0xffffff}), 1, 1.0);
 	var rotation = {
 		x: 0.0,
 		y: 0.0,
@@ -27,8 +27,8 @@ var tofu = (function() {
 
 	var MiniCube = function(type) {
 		// this.cube = new THREE.Mesh(miniGeometry, material);
-		this.cube = new Physijs.BoxMesh(miniGeometry, miniMaterial, 1000);
-		this.collisions = 0;
+		this.cube = new Physijs.BoxMesh(miniGeometry, miniMaterial, 1);
+		// this.collisions = 0;
 		// this.cube.addEventListener( 'collision', function( other_object, relative_velocity, relative_rotation, contact_normal ) {
 		//
 		// });
@@ -53,7 +53,7 @@ var tofu = (function() {
 	var createChar = function (font) {
 		if (64 < font.keyCode && font.keyCode < 91) {
 			font.positions.forEach ( position => {
-				var cube = new THREE.Mesh(geometry, material);
+				var cube = new THREE.Mesh(cubeGeometry, material);
 				cubes.push( cube );
 				var posX = position[0] + fonts.length * 90;
 		    cube.position.set(posX, position[1], position[2]);
@@ -87,7 +87,7 @@ var tofu = (function() {
 		// rotation.z += 0.01;
 		cubes.forEach(elem => {
 			elem.rotation.x = rotation.x;
-			elem.rotation.y = rotation.y;
+			elem.rotation.y = rotation.y; 
 			// elem.rotation.z = rotation.z;
 		});
 		miniCubes.forEach(elem => {
