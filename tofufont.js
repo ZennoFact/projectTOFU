@@ -9,7 +9,8 @@ var tofu = (function() {
 		x: 0.0,
 		y: 0.0,
 		z: 0.0
-	}
+	};
+	var dif = 0;
 	var fonts = [];
 	var cubes = [];
 	var miniCubes = [];
@@ -27,22 +28,24 @@ var tofu = (function() {
 	];
 
 	var MiniCube = function(type) {
-		// this.cube = new THREE.Mesh(miniGeometry, material);
 		this.cube = new Physijs.BoxMesh(miniGeometry, miniMaterial, 1);
 		// this.collisions = 0;
 		// this.cube.addEventListener( 'collision', function( other_object, relative_velocity, relative_rotation, contact_normal ) {
 		// 	if (other_object === reverseEarth) console.log('collision!');
 		// });
 		this.vector = minisVector[type];
-		this.step = 180;
+		this.step = 300;
 		this.life = true;
+		this.degree = 0;
 	};
 	MiniCube.prototype.move = function () {
 		// 少しでも処理を減らすためpowとsqrtの使用をやめる
+		// this.step--;
 		var distance　= (0 - this.cube.position.x) * (0 - this.cube.position.x) + (0 - this.cube.position.y) * (0 - this.cube.position.y) + (0 - this.cube.position.z) * (0 - this.cube.position.z);
-		if(worldRange - miniSide - miniSide <= distance){
+		if(worldRange - miniSide - miniSide <= distance && distance < worldRange + miniSide + miniSide){
 			scene.remove(this.cube);
 			this.life = false;
+			delete this.cube;
 		}
 	};
 
@@ -57,8 +60,11 @@ var tofu = (function() {
 		if (64 < font.keyCode && font.keyCode < 91) {
 			font.positions.forEach ( position => {
 				var cube = new THREE.Mesh(cubeGeometry, material);
+				cube.rotate = function (){};
+				cube.degree = 0;
 				cubes.push( cube );
-				var posX = position[0] + fonts.length * 90;
+				var posX = position[0] + fonts.length * 90 - dif;
+				cube.radius = posX;
 		    cube.position.set(posX, position[1], position[2]);
 				scene.add(cube);
 			});
@@ -91,6 +97,7 @@ var tofu = (function() {
 		cubes.forEach(elem => {
 			elem.rotation.x = rotation.x;
 			elem.rotation.y = rotation.y;
+			elem.rotate();
 			// elem.rotation.z = rotation.z;
 		});
 		miniCubes.forEach(elem => {
@@ -103,10 +110,34 @@ var tofu = (function() {
 		worldRange = range * range; // ルートの計算をさせないため2乗して代入
 	};
 
+	var setRotate = function () {
+		cubes.forEach(elem => {
+			elem.rotate = function () {
+				elem.degree += 0.1;
+				// 角度をラジアンに変換
+				var rad = elem.degree * Math.PI / 180;
+				// X座標 = 半径 x Cosθ
+				var x = elem.radius * Math.cos(rad);
+				// Y座標 = 半径 x Sinθ
+				var y = elem.radius * Math.sin(rad);
+				var z = elem.radius * Math.sin(rad);
+				elem.position.x = x;
+				// elem.position.y = y;
+				elem.position.z = z;
+			};
+		});
+	};
+
+	var resetDif = function () {
+		dif = fonts.length * 90;
+	};
+
 	return {
 		createChar: createChar,
 		deleteChar: deleteChar,
 		animation: animation,
-		setWorldRange: setWorldRange
+		setWorldRange: setWorldRange,
+		setRotate: setRotate,
+		resetDif: resetDif
 	};
 })();

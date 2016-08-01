@@ -55,8 +55,7 @@
       controls.userRotateSpeed = 0.8;
 
       // 地面を作ってみる
-      // Ground
-  		ground_material = Physijs.createMaterial(
+      ground_material = Physijs.createMaterial(
   			new THREE.MeshLambertMaterial({ color: 0x777777 }),
   			.8, // high friction
   			.3 // low restitution
@@ -79,6 +78,7 @@
           side: THREE.BackSide
         })
     	);
+      reverseEarth.receiveShadow = true;
       scene.add(reverseEarth);
       tofu.setWorldRange(reRadius);
 
@@ -118,6 +118,9 @@
         if (e.keyCode === 8) {
         window.event.returnValue = false;
           tofu.deleteChar();
+        } else if (e.keyCode === 13) {
+          tofu.setRotate();
+          tofu.resetDif();
         } else {
           tofu.createChar(fontData.get(e.keyCode));
         }
