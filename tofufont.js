@@ -13,6 +13,7 @@ var tofu = (function() {
 	var fonts = [];
 	var cubes = [];
 	var miniCubes = [];
+	var worldRange; // 衝突したらｍｉｎｉＣｕｂｅが消えるオブジェクトの半径を設定
 
 	var minisVector = [
 		[0.2, 0.2, 0.2],
@@ -30,22 +31,24 @@ var tofu = (function() {
 		this.cube = new Physijs.BoxMesh(miniGeometry, miniMaterial, 1);
 		// this.collisions = 0;
 		// this.cube.addEventListener( 'collision', function( other_object, relative_velocity, relative_rotation, contact_normal ) {
-		//
+		// 	if (other_object === reverseEarth) console.log('collision!');
 		// });
 		this.vector = minisVector[type];
 		this.step = 180;
+		this.life = true;
 	};
 	MiniCube.prototype.move = function () {
-		// TODO: 外側に大きな箱を作って，外壁に触れたら消えるとかにするといい感じになるのでは
-		// this.step--;
-		if(this.step <= 0){
+		// 少しでも処理を減らすためpowとsqrtの使用をやめる
+		var distance　= (0 - this.cube.position.x) * (0 - this.cube.position.x) + (0 - this.cube.position.y) * (0 - this.cube.position.y) + (0 - this.cube.position.z) * (0 - this.cube.position.z);
+		if(worldRange - miniSide - miniSide <= distance){
 			scene.remove(this.cube);
+			this.life = false;
 		}
 	};
 
 	var refreshMiniCube = function () {
 		var newArray = miniCubes.filter(elem => {
-			return (0 < elem.step);
+			return (elem.life);
 		});
 		miniCubes = newArray;
 	};
@@ -87,7 +90,7 @@ var tofu = (function() {
 		// rotation.z += 0.01;
 		cubes.forEach(elem => {
 			elem.rotation.x = rotation.x;
-			elem.rotation.y = rotation.y; 
+			elem.rotation.y = rotation.y;
 			// elem.rotation.z = rotation.z;
 		});
 		miniCubes.forEach(elem => {
@@ -96,9 +99,14 @@ var tofu = (function() {
 		refreshMiniCube();
 	};
 
+	var setWorldRange = function (range) {
+		worldRange = range * range; // ルートの計算をさせないため2乗して代入
+	};
+
 	return {
 		createChar: createChar,
 		deleteChar: deleteChar,
 		animation: animation,
+		setWorldRange: setWorldRange
 	};
 })();

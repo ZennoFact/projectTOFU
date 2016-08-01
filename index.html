@@ -2,7 +2,8 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>TOHU!</title>
+    <link rel="shortcut icon" href="assets/k_maeno.ico">
+    <title>TOFU | 豆腐</title>
     <link rel="stylesheet" href="./css/style.css">
   </head>
   <body>
@@ -40,22 +41,18 @@
       ambientLight = new THREE.AmbientLight(0xeeeeee, 0.5);
       scene.add( ambientLight );
 
-      directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
-      directionalLight.position.set( 0, 1, 7 );
+      // directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+      // directionalLight.position.set( 0, 1, 7 );
       // scene.add( directionalLight );
 
-// TODO: ライトが正しく機能していないような
-      var directionalLight2 = new THREE.DirectionalLight( 0xffffff, 1 );
-      directionalLight2.position.set( -2000, 1000, 500 );
-      scene.add( directionalLight2 );
+      directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+      directionalLight.position.set( -2000, 1000, 500 );
+      scene.add( directionalLight );
 
       // マウスでの操作を可能にする
       controls = new THREE.OrbitControls(camera);
-      // controls.enableDamping = true;
       controls.dampingFactor = 0.25;
       controls.userRotateSpeed = 0.8;
-      // controls.autoRotate = true;
-      // controls.autoRotateSpeed = 0.1;
 
       // 地面を作ってみる
       // Ground
@@ -73,25 +70,28 @@
   		ground.receiveShadow = true;
   		scene.add( ground );
 
-      // 世界【球体】を作ってみる(Physijsを使うと反発が生まれて無理だった。今後要検証)
+      // 地球【球体】を作ってみる(Physijsを使うと反発が生まれて無理だった。今後要検証)
+      var reRadius = 710;
       var reverseEarth = new THREE.Mesh(
-    		new THREE.SphereGeometry(710, 32, 32),
+    		new THREE.SphereGeometry(reRadius, 32, 32),
     		new THREE.MeshBasicMaterial({
           color: 0x082e80,
           side: THREE.BackSide
         })
     	);
-    	scene.add(reverseEarth);
+      scene.add(reverseEarth);
+      tofu.setWorldRange(reRadius);
+
       var loader = new THREE.TextureLoader();
-      var bumpTexture = loader.load('assets/images/bumpmap.jpg');
-      var mapTexture = loader.load('assets/images/earth.jpg');
-      var mapCloudTexture = loader.load('assets/images/earthcloudmap.png');
+      var mapTexture = loader.load('assets/images/earth_2048.jpg');
+      // var mapTexture = loader.load('assets/images/night_earth.jpg');
+      // var mapCloudTexture = loader.load('assets/images/clouds_1024.png');
       earth = new THREE.Mesh(
     		new THREE.SphereGeometry(712, 32, 32),
     		new THREE.MeshPhongMaterial({
-          color: 0xffffff,
+          color: 0xeeeeee,
           map: mapTexture,
-          bumpMap: bumpTexture,
+          bumpMap: mapTexture,
           bumpScale: 0.05
           // specular: 0xcccccc, shininess:50, ambient: 0xffffff
         })
@@ -99,15 +99,15 @@
       earth.overdraw = true;
       earth.shininess = 0;
     	scene.add(earth);
-      cloud = new THREE.Mesh(
-    		new THREE.SphereGeometry(714, 32, 32),
-    		new THREE.MeshLambertMaterial({
-          color: 0xffffff,
-          map: mapCloudTexture
-        })
-    	);
-      cloud.overdraw = true;
-      cloud.transparent = true;
+      // cloud = new THREE.Mesh(
+    	// 	new THREE.SphereGeometry(714, 32, 32),
+    	// 	new THREE.MeshLambertMaterial({
+      //     color: 0xffffff,
+      //     map: mapCloudTexture
+      //   })
+    	// );
+      // cloud.overdraw = true;
+      // cloud.transparent = true;
     	// scene.add(cloud);
 
       $.getJSON("assets/jsons/stars.json", drawStars);
@@ -131,7 +131,6 @@
       tofu.animation();
 
       earth.rotation.y -= 0.001;
-      cloud.rotation.y -= 0.001;
 
     	controls.update();
     	renderer.render(scene, camera);
@@ -150,31 +149,51 @@
   function drawStars(stars) {
     var geometry = new THREE.Geometry();
     var material = new THREE.ParticleBasicMaterial({
-      // vertexColors: true,
-      color: 0xffffff,
-      size: 1.0,
+      vertexColors: true,
+      size: 2.0,
       sizeAttenuation: false
     });
-    // var colors = [];
+    var colors = [], brightStars = [];
     for (var i in stars) {
-    // for (var i = 0; i < stars.length / 6; i++) {
-if (i % 4 === 0) {
-  var star = stars[i];
-  var ra = star.RA * Math.PI / 180;
-  var dec = star.Dec * Math.PI / 180;
-  var dist = 50000;
-  var x = dist * Math.cos(ra) * Math.cos(dec);
-  var y = dist * Math.sin(ra) * Math.cos(dec);
-  var z = dist * Math.sin(dec);
-  var position = new THREE.Vector3(x, z, -y);
-}
+      var star = stars[i];
+      var ra = star.RA * Math.PI / 180;
+      var dec = star.Dec * Math.PI / 180;
+      var dist = 10000;
+      var x = dist * Math.cos(ra) * Math.cos(dec);
+      var y = dist * Math.sin(ra) * Math.cos(dec);
+      var z = dist * Math.sin(dec);
+      star.position = new THREE.Vector3(x, z, -y);
 
-      geometry.vertices.push(position);
-      // colors.push(star.color);
+      var alpha = 1 - star.Vmag / 10;
+      alpha = (alpha < 0.1) ? 0.1 : (alpha > 1 ? 1 : alpha);
+      star.color = new THREE.Color(parseInt(star.color));
+      star.color.r *= alpha;
+      star.color.g *= alpha;
+      star.color.b *= alpha;
+
+      // TODO: なぜか中心に星がでる？？
+      if (star.Vmag < 4.0) {
+        // geometry.vertices.push(star.position);
+        brightStars.push(star);
+      } else {
+        geometry.vertices.push(star.position);
+        colors.push(star.color);
+      }
     }
-    // geometry.colors = colors;
+    geometry.colors = colors;
     var particleSystem = new THREE.ParticleSystem(geometry, material);
     scene.add(particleSystem);
+
+    // ここがうまく作動していなかったので削除
+    // for (var i in brightStars) {
+    //   var star = brightStars[i];
+    //   var r = 3 - star.Vmag * 0.4;
+    //   var c = star.color;
+    //   var material = new THREE.MeshBasicMaterial({ color: c, blending: THREE.AdditiveBlending });
+    //   var mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 4, 4), material);
+    //   mesh.position = star.position;
+    //   scene.add(mesh)?;
+    // }
   }
 
     </script>
